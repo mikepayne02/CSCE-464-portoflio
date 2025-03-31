@@ -1,0 +1,23 @@
+---
+import Button from '@/components/Button.astro'
+import BaseLayout from '@/layouts/Base.astro'
+import CTA from '@/components/CTA.astro'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+
+const meta = {
+  description: 'Not found',
+  title: '404'
+}
+---
+
+<BaseLayout {meta}>
+  <div class='flex flex-col gap-y-3 px-4 py-10 text-center sm:px-6 lg:px-8'>
+    <h1 class='block font-mono text-7xl font-bold sm:text-9xl'>404</h1>
+    <p class='text-muted-foreground mt-3'>How could this happen</p>
+    <p>We couldn't find that page</p>
+    <Button text='Home' href='/' style='button' class='mx-auto w-5 w-min'>
+      <MdiArrowLeft />
+    </Button>
+  </div>
+  <CTA>Contact</CTA>
+</BaseLayout>

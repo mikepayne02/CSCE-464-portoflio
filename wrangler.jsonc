@@ -1,0 +1,18 @@
+{
+  "name": "portfolio",
+  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2024-11-11",
+  "kv_namespaces": [
+    {
+      "binding": "COMMENTS",
+      "id": "a8b96ad55a6b4bcf9329ad26c294e181"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "portfolio",
+      "database_id": "6d4dbbba-aa9d-43bd-b982-5ab3447283b2"
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+---
+// src/components/blog/CommentForm.astro
+import { TURNSTILE_SITE_KEY } from 'astro:env/client'
+import Button from '@/components/Button.astro'
+import SvgSpinners3DotsScale from '~icons/svg-spinners/3-dots-scale'
+
+interface Props {
+  targetUrl: string // URL of the page this form is on
+}
+const { targetUrl } = Astro.props
+---
+
+<script
+  src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallbackComment'
+  is:inline
+  defer
+  async
+  data-astro-rerun></script>
+<script define:vars={{ TURNSTILE_SITE_KEY }} is:inline>
+  window.onloadTurnstileCallbackComment = function () {
+    const container = document.getElementById('turnstile-comment-container')
+    // Ensure turnstile API is loaded and container exists
+    if (
+      container &&
+      typeof window.turnstile !== 'undefined' &&
+      typeof window.turnstile.render === 'function'
+    ) {
+      // Clear out the container in case a widget was already there from a previous render
+      container.innerHTML = ''
+      window.turnstile.render('#turnstile-comment-container', {
+        sitekey: TURNSTILE_SITE_KEY,
+        'response-field-name': 'turnstile'
+      })
+    } else if (container) {
+      // console.warn('Turnstile API not ready or container not found for comment form.');
+    }
+  }
+</script>
+
+<div class='comment-form-wrapper mt-6'>
+  <h3 class='mb-4 text-xl font-semibold'>Leave a Comment</h3>
+  <div id='comment-status' class='mb-4 min-h-[2rem]'></div>
+
+  <form id='comment-form' class='group space-y-4' novalidate>
+    <input type='hidden' name='targetUrl' value={targetUrl} />
+
+    <div>
+      <label
+        for='authorName'
+        class='text-muted-foreground block text-sm font-medium'
+        >Name <span class='text-red-500'>*</span></label
+      >
+      <input
+        type='text'
+        name='authorName'
+        id='authorName'
+        placeholder='Your Name'
+        required
+        maxlength='80'
+        autocomplete='name'
+        class='border-input bg-primary-foreground hover:border-foreground/25 peer mt-1 block w-full rounded-md p-2 shadow-sm transition focus:border-blue-500 focus:ring-blue-500'
+      />
+      <p
+        class='error-message hidden peer-invalid:[&:not(:placeholder-shown)]:block'
+      >
+        Name is required.
+      </p>
+      <p id='authorName-error' class='error-message'></p>
+    </div>
+
+    <div>
+      <label for='email' class='text-muted-foreground block text-sm font-medium'
+        >Email <span class='text-red-500'>*</span></label
+      >
+      <input
+        type='email'
+        name='email'
+        id='email'
+        placeholder='name@example.com (not publicly displayed)'
+        required
+        maxlength='100'
+        class='border-input bg-primary-foreground hover:border-foreground/25 peer mt-1 block w-full rounded-md p-2 shadow-sm transition focus:border-blue-500 focus:ring-blue-500'
+      />
+      <p
+        class='error-message hidden peer-invalid:[&:not(:placeholder-shown)]:block'
+      >
+        A valid email is required.
+      </p>
+      <p id='email-error' class='error-message'></p>
+    </div>
+
+    <div>
+      <label
+        for='commentText'
+        class='text-muted-foreground block text-sm font-medium'
+        >Comment <span class='text-red-500'>*</span></label
+      >
+      <textarea
+        id='commentText'
+        name='commentText'
+        rows='4'
+        required
+        minlength='3'
+        maxlength='2000'
+        placeholder='Share your thoughts...'
+        class='border-input bg-primary-foreground hover:border-foreground/25 peer mt-1 block w-full rounded-md p-2 shadow-sm transition focus:border-blue-500 focus:ring-blue-50'
+      ></textarea>
+      <p
+        class='error-message hidden peer-invalid:[&:not(:placeholder-shown)]:block'
+      >
+        Comment is required (3-2000 characters).
+      </p>
+      <p id='commentText-error' class='mt-1 h-4 text-sm text-red-50'></p>
+    </div>
+
+    <div id='turnstile-comment-container' class=''></div>
+    <p id='turnstile-error' class='mt-1 hidden h-4 text-sm text-red-500'></p>
+
+    <div>
+      <Button
+        type='submit'
+        id='comment-submit-button'
+        as='button'
+        class='cursor-pointer px-4 py-2 group-invalid:pointer-events-none group-invalid:opacity-50 disabled:pointer-events-none disabled:opacity-50'
+      >
+        <span class='js-submit-text block'>Submit Comment</span>
+        <span class='js-loading-text hidden'>
+          Submitting <SvgSpinners3DotsScale class='inline size-4' />
+        </span>
+      </Button>
+    </div>
+  </form>
+</div>
+
+<script>
+  declare global {
+    // eslint-disable-next-line no-unused-vars
+    interface Window {
+      turnstile: any // Cloudflare Turnstile widget API
+    }
+  }
+  import { actions, isInputError } from 'astro:actions'
+  import { navigate } from 'astro:transitions/client'
+
+  function setupCommentForm() {
+    const form = document.getElementById('comment-form') as HTMLFormElement
+    const submitButton = document.getElementById(
+      'comment-submit-button'
+    ) as HTMLButtonElement
+    const statusDiv = document.getElementById(
+      'comment-status'
+    ) as HTMLDivElement
+    const turnstileContainer = document.getElementById(
+      'turnstile-comment-container'
+    )
+
+    function setLoadingState(isLoading: boolean) {
+      const submitText = submitButton.querySelector('.js-submit-text')
+      const loadingText = submitButton.querySelector('.js-loading-text')
+      submitButton.disabled = isLoading
+      if (isLoading) {
+        submitText?.classList.add('hidden')
+        loadingText?.classList.remove('hidden')
+      } else {
+        submitText?.classList.remove('hidden')
+        loadingText?.classList.add('hidden')
+      }
+    }
+
+    function clearErrors() {
+      form?.querySelectorAll('[id$="-error"]').forEach((el) => {
+        if (el) {
+          el.textContent = ''
+          el.classList.add('hidden')
+        }
+      })
+      if (statusDiv) statusDiv.innerHTML = ''
+    }
+
+    function displayErrors(error: any) {
+      clearErrors()
+
+      if (isInputError(error)) {
+        let firstField: string | null = null
+        for (const field in error.fields) {
+          if (!firstField) firstField = field
+          const errorElement = document.getElementById(
+            `${field}-error`
+          ) as HTMLParagraphElement
+          const errorMessage = error.fields[field]?.join(', ') || ''
+          errorElement.textContent = errorMessage
+          errorElement.classList.remove('hidden')
+        }
+        if (firstField) {
+          const fieldElement = document.getElementById(firstField)
+          fieldElement?.focus()
+        }
+      } else if (error?.message) {
+        statusDiv.innerHTML = `<p class="text-red-500">${error.message}</p>`
+      } else {
+        statusDiv.innerHTML = `<p class="text-red-500">An unexpected error occurred. Please try again.</p>`
+      }
+    }
+
+    const handleSubmit = async (event: SubmitEvent) => {
+      event.preventDefault()
+
+      setLoadingState(true)
+      clearErrors()
+      const formData = new FormData(form)
+
+      try {
+        const { data, error } = await actions.addComment(formData)
+
+        if (error) {
+          displayErrors(error)
+          if (window.turnstile) {
+            try {
+              window.turnstile.reset(turnstileContainer)
+            } catch (e) {
+              console.warn('Could not reset turnstile after action error:', e)
+            }
+          }
+          setLoadingState(false)
+        } else if (data?.success) {
+          navigate(window.location.href, { history: 'replace' })
+        } else {
+          displayErrors({
+            message: 'An unexpected response was received from the server.'
+          })
+          if (window.turnstile) {
+            try {
+              window.turnstile.reset(turnstileContainer)
+            } catch (e) {
+              console.warn(
+                'Could not reset turnstile after unexpected response:',
+                e
+              )
+            }
+          }
+          setLoadingState(false)
+        }
+      } catch (e) {
+        console.error('Comment form submission failed:', e)
+        displayErrors({
+          message:
+            'A network error occurred. Please check your connection and try again.'
+        })
+        if (window.turnstile) {
+          try {
+            window.turnstile.reset(turnstileContainer)
+          } catch (err) {
+            console.warn(
+              'Could not reset turnstile after submission failure:',
+              err
+            )
+          }
+        }
+        setLoadingState(false)
+      }
+    }
+
+    form.addEventListener('submit', handleSubmit)
+
+    form.querySelectorAll('input, textarea').forEach((input) => {
+      const handleInputEvent = () => {
+        const errorElement = document.getElementById(
+          `${input.getAttribute('name')}-error`
+        )
+        if (errorElement) errorElement.textContent = ''
+        if (statusDiv?.querySelector('.text-red-500')) {
+          statusDiv.innerHTML = ''
+        }
+      }
+      input.addEventListener('input', handleInputEvent)
+    })
+  }
+
+  document.addEventListener('astro:page-load', setupCommentForm)
+</script>

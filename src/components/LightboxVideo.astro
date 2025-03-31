@@ -1,0 +1,26 @@
+---
+const { src, ...props } = Astro.props
+import { siteConfig } from '@/site.config'
+---
+
+<div data-lightbox>
+  <video
+    data-lightbox-video
+    class='rounded-md'
+    autoplay
+    loop
+    muted
+    playsinline
+    {...props}
+  >
+    <source
+      src=`${siteConfig.bucketEndpoint}/videos/${src}.webm`
+      type='video/webm codecs=av01.0.08M'
+    />
+    <source
+      src=`${siteConfig.bucketEndpoint}/videos/${src}.mp4`
+      type='video/mp4'
+    />
+    Your browser does not support the video tag.
+  </video>
+</div>

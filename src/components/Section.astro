@@ -1,0 +1,81 @@
+---
+interface Props {
+  className?: string
+  title: string
+}
+const { className, title } = Astro.props
+---
+
+<section
+  class:list={[className, 'flex flex-col gap-y-5 md:flex-row md:gap-y-0']}
+>
+  <sticky-title
+    class='relative top-0 self-start text-xl font-semibold tracking-wider duration-400 [text-shadow:_0_0_25px_hsl(var(--foreground)/25%)] md:sticky md:top-[20px] md:w-1/4'
+  >
+    <h2 data-bump>{title}</h2>
+  </sticky-title>
+  <div class='flex flex-col gap-y-3 md:w-3/4'>
+    <slot />
+  </div>
+</section>
+
+<script>
+  class StickyTitle extends HTMLElement {
+    private bumpElem: HTMLHeadingElement
+    constructor() {
+      super()
+
+      this.bumpElem = this.querySelector<HTMLHeadingElement>(
+        'h2[data-bump]'
+      ) as HTMLHeadingElement
+
+      new IntersectionObserver(
+        ([event]) => {
+          const mql = window.matchMedia('(max-width: 768px)')
+          if (mql.matches) return
+
+          if (
+            this.bumpElem.classList.contains('bump') ||
+            (event?.intersectionRatio ?? 0) >= 1
+          )
+            return
+          const bcr = this.bumpElem.getBoundingClientRect()
+          if (bcr.bottom < window.innerHeight)
+            this.bumpElem.classList.toggle('bump')
+          setTimeout(() => this.bumpElem.classList.remove('bump'), 400)
+        },
+        {
+          rootMargin: `-21px 0px 0px 0px`,
+          threshold: [1]
+        }
+      ).observe(this)
+    }
+  }
+
+  if (!customElements.get('sticky-title'))
+    customElements.define('sticky-title', StickyTitle)
+</script>
+
+<style>
+  .bump {
+    animation: bump 0.4s;
+  }
+
+  @keyframes bump {
+    0% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1);
+    }
+    40% {
+      transform: translateY(80%);
+      animation-timing-function: cubic-bezier(0.5, 0, 1, 0.5);
+    }
+    80% {
+      transform: translateY(-12%);
+      animation-timing-function: cubic-bezier(0.5, 0, 1, 0.5);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+</style>

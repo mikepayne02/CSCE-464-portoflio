@@ -1,0 +1,20 @@
+---
+const { id, file = '' } = Astro.props
+
+interface GistResponse {
+  description: string
+  public: boolean
+  created_at: string
+  files: string[]
+  owner: string
+  div: string
+  stylesheet: string
+}
+
+const { div, stylesheet } = (await fetch(
+  `https://gist.github.com/${id}.json?file=${file}`
+).then((res) => res.json())) as GistResponse
+---
+
+<link rel='stylesheet' href={stylesheet} />
+<div class='not-prose' set:html={div} />

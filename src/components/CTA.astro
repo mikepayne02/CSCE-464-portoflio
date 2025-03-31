@@ -1,0 +1,28 @@
+---
+interface Props {
+  color?: string
+  className?: string
+  href?: string
+}
+const { color, className, href } = Astro.props
+---
+
+<a
+  href={href ?? '/contact'}
+  class:list={[
+    className,
+    'w-min-content border-input bg-primary-foreground hover:bg-border/25 mx-auto inline-flex flex-row items-center gap-x-3 rounded-full border px-4 py-2 text-sm shadow-xs transition hover:shadow-md'
+  ]}
+>
+  <span class='relative flex items-center justify-center'>
+    <span
+      class=`absolute inline-flex size-2 animate-ping rounded-full border border-${color}-400 bg-blue-400 opacity-75`
+    ></span>
+    <span
+      class=`relative inline-flex size-2 rounded-full bg-${color ?? 'blue'}-400`
+    ></span>
+  </span>
+  <p class='font-medium'>
+    <slot />
+  </p>
+</a>

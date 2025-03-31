@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/Base.astro'
+import LineMdDownloadLoop from '~icons/line-md/download-loop'
+import { siteConfig } from '@/site.config'
+
+const resumeBase = `${siteConfig.author.replace(' ', '')}_Resume_2025`
+const resumePdfUrl = `${siteConfig.bucketEndpoint}/resume/${resumeBase}.pdf`
+const resumeHtmlUrl = `${siteConfig.bucketEndpoint}/resume/${resumeBase}.html`
+---
+
+<BaseLayout
+  meta={{ title: 'Resume', description: 'My Resume' }}
+  showViewCount={true}
+>
+  <a
+    href={resumePdfUrl}
+    class='group relative mx-auto mt-8 mb-5 flex flex-col items-center overflow-hidden rounded-full p-[2px] text-sm shadow-xs transition hover:shadow-md'
+  >
+    <div
+      class='absolute inset-0 my-[-200px] w-full animate-spin bg-conic from-blue-400/10 to-blue-400'
+    >
+    </div>
+    <div
+      class='bg-primary-foreground group-hover:bg-secondary relative inline-flex flex-row rounded-full p-4'
+    >
+      <LineMdDownloadLoop />
+      <p class='px-1'>Download</p>
+    </div>
+  </a>
+  <div class='flex w-full items-start'>
+    <div class='aspect-w-[26] aspect-h-[36] w-full'>
+      <iframe title='resume' src={resumeHtmlUrl} class='h-full w-full'></iframe>
+    </div>
+  </div>
+</BaseLayout>

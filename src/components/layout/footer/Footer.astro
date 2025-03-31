@@ -1,0 +1,119 @@
+---
+import { siteConfig } from '@/site-config'
+import SocialLink from './SocialLink.astro'
+import ViewCount from './ViewCount.astro'
+
+import MdiSnapchat from '~icons/mdi/snapchat'
+import MdiInstagram from '~icons/mdi/instagram'
+import MdiGithub from '~icons/mdi/github'
+import MdiLinkedin from '~icons/mdi/linkedin'
+import MdiEthereum from '~icons/mdi/ethereum'
+import SvgSpinners3DotsScale from '~icons/svg-spinners/3-dots-scale'
+import MdiEmailOutline from '~icons/mdi/email-outline'
+
+const { showViewCount = false } = Astro.props
+
+const year = new Date().getFullYear()
+---
+
+<footer class='mx-auto mt-12 w-full'>
+  <div class='border-border border-t pt-5'>
+    <div
+      class='mb-5 flex flex-col-reverse items-center justify-between gap-y-3 sm:flex sm:flex-row sm:items-start sm:gap-y-0'
+    >
+      <div class='flex gap-x-4 text-sm'>
+        <site-copyright
+          data-author={siteConfig.author}
+          class='text-muted-foreground'
+        >
+          &copy; {year}
+          {siteConfig.author}
+        </site-copyright>
+      </div>
+      <div
+        class='order-first flex flex-col gap-y-3 sm:absolute sm:start-1/2 sm:order-none sm:-translate-x-1/2'
+      >
+        {
+          showViewCount && (
+            <span class='text-muted-foreground text-center text-sm'>
+              <ViewCount path={Astro.url.pathname} server:defer>
+                <SvgSpinners3DotsScale
+                  slot='fallback'
+                  class='mx-auto h-5 w-5'
+                />
+              </ViewCount>
+            </span>
+          )
+        }
+        <!-- <a href='https://uptime.mikepayne.me/status/main' target='_blank'>
+          <img
+            class='block w-40 dark:hidden'
+            src='https://uptime.mikepayne.me/api/badge/1/avg-response?color=%233b82f6&labelColor=%23fcfcfd&style=flat'
+            alt='Uptime Badge'
+          />
+          <img
+            class='hidden w-40 dark:block'
+            src='https://uptime.mikepayne.me/api/badge/1/avg-response?color=%233b82f6&labelColor=%2318181b&style=flat'
+            alt='Uptime Badge'
+          />
+        </a> -->
+      </div>
+      <div class='flex items-center justify-between'>
+        <div class='flex items-center'>
+          <SocialLink
+            label='Snapchat'
+            href='https://snapchat.com/t/uMm9JFth'
+            target='_blank'
+          >
+            <MdiSnapchat slot='icon' class='w-full' />
+          </SocialLink>
+          <SocialLink
+            label='Instagram'
+            href='https://www.instagram.com/mikepayne02/'
+            target='_blank'
+          >
+            <MdiInstagram slot='icon' class='w-full' />
+          </SocialLink>
+          <SocialLink
+            label='GitHub'
+            href='https://github.com/mikepayne02'
+            target='_blank'
+          >
+            <MdiGithub slot='icon' class='w-full' />
+          </SocialLink>
+          <SocialLink
+            label='LinkedIn'
+            href='https://www.linkedin.com/in/mikepayne02/'
+            target='_blank'
+          >
+            <MdiLinkedin slot='icon' class='w-full' />
+          </SocialLink>
+          <SocialLink
+            label='Ethereum'
+            href='https://etherscan.io/address/0x964D98dfa07549cB7571a4D6A161D825d76f9070'
+            target='_blank'
+          >
+            <MdiEthereum slot='icon' class='w-full' />
+          </SocialLink>
+          <SocialLink
+            label='Email'
+            href='mailto:michael@mpayne.me'
+            target='_blank'
+          >
+            <MdiEmailOutline slot='icon' class='w-full' />
+          </SocialLink>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  class Copyright extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = `&copy; ${new Date().getFullYear()} ${this.dataset.author}`
+    }
+  }
+
+  customElements.define('site-copyright', Copyright)
+</script>

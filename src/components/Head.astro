@@ -1,0 +1,174 @@
+---
+// Import the global.css file here so that it is included on
+// all pages through the use of the <BaseHead /> component.
+import { siteConfig } from '@/site-config'
+import type { SiteMeta } from '@/types'
+import { ClientRouter } from 'astro:transitions'
+import { Font } from 'astro:assets'
+import '@/styles/app.css'
+
+type Props = SiteMeta
+const { articleDate, description, ogImage, title } = Astro.props
+
+const titleSeparator = '•'
+const siteTitle = `${title} ${titleSeparator} ${siteConfig.title}`
+const canonicalURL = new URL(Astro.url.pathname, Astro.site)
+const permalink = new URL(Astro.url.pathname, Astro.site).href
+const socialImageURL = new URL(
+  ogImage ? ogImage : '/social-image.png',
+  Astro.url
+).href
+---
+
+<meta charset='utf-8' />
+<meta
+  content='width=device-width, initial-scale=1.0, shrink-to-fit=no'
+  name='viewport'
+/>
+<meta content='IE=edge' http-equiv='X-UA-Compatible' />
+<title>{siteTitle}</title>
+<ClientRouter />
+
+{/* Meta tags */}
+{/* Icons / Favicon */}
+<link
+  rel='apple-touch-icon'
+  sizes='180x180'
+  href='/favicon-dark/apple-touch-icon.png'
+  media='(prefers-color-scheme: light)'
+/>
+<link
+  rel='icon'
+  type='image/png'
+  sizes='32x32'
+  href='/favicon-light/favicon-32x32.png'
+  media='(prefers-color-scheme: light)'
+/>
+<link
+  rel='icon'
+  type='image/png'
+  sizes='16x16'
+  href='/favicon-light/favicon-16x16.png'
+  media='(prefers-color-scheme: light)'
+/>
+
+<link
+  rel='apple-touch-icon'
+  sizes='180x180'
+  href='/favicon-dark/apple-touch-icon.png'
+  media='(prefers-color-scheme: dark)'
+/>
+<link
+  rel='icon'
+  type='image/png'
+  sizes='32x32'
+  href='/favicon-dark/favicon-32x32.png'
+  media='(prefers-color-scheme: dark)'
+/>
+<link
+  rel='icon'
+  type='image/png'
+  sizes='16x16'
+  href='/favicon-dark/favicon-16x16.png'
+  media='(prefers-color-scheme: dark)'
+/>
+
+<link
+  rel='shortcut icon'
+  href='/favicon.ico'
+  media='(prefers-color-scheme: light)'
+/>
+<link
+  rel='shortcut icon'
+  href='/favicon-dark/favicon.ico'
+  media='(prefers-color-scheme: dark)'
+/>
+
+<meta name='msapplication-TileColor' content='#2d89ef' />
+<meta name='msapplication-config' content='/favicon-light/browserconfig.xml' />
+<link
+  rel='icon'
+  type='image/png'
+  sizes='16x16'
+  href='/favicon-light/favicon-16x16.png'
+/>
+<link rel='manifest' href='/site.webmanifest' />
+
+{/* Preload fonts */}
+<Font cssVariable='--font-sans' preload />
+<Font cssVariable='--font-mono' preload />
+
+{/* Canonical URL */}
+<link rel='canonical' href={canonicalURL} />
+
+{/* Primary Meta Tags */}
+<meta content={siteTitle} name='title' />
+<meta content={description} name='description' />
+<meta content={siteConfig.author} name='author' />
+
+{/* Theme Color for iOS tab color */}
+<meta name='theme-color' content='hsl(210 33% 99%)' />
+
+{/* Color Scheme for dark scrollbars */}
+<meta name='color-scheme' content='light' />
+
+{/* Open Graph / Facebook */}
+<meta content={articleDate ? 'article' : 'website'} property='og:type' />
+<meta content={title} property='og:title' />
+<meta content={description} property='og:description' />
+<meta content={permalink} property='og:url' />
+<meta content={siteConfig.title} property='og:site_name' />
+<meta content={siteConfig.ogLocale} property='og:locale' />
+<meta content={socialImageURL} property='og:image' />
+<meta content='1200' property='og:image:width' />
+<meta content='630' property='og:image:height' />
+{
+  articleDate && (
+    <>
+      <meta content={siteConfig.author} property='article:author' />
+      <meta content={articleDate} property='article:published_time' />
+    </>
+  )
+}
+
+{/* Twitter */}
+<meta content='summary_large_image' property='twitter:card' />
+<meta content={canonicalURL} property='twitter:url' />
+<meta content={title} property='twitter:title' />
+<meta content={description} property='twitter:description' />
+<meta content={socialImageURL} property='twitter:image' />
+
+{/* Sitemap */}
+<link href='/sitemap-index.xml' rel='sitemap' />
+
+{/* RSS auto-discovery */}
+<link
+  href='/rss.xml'
+  rel='alternate'
+  title={siteConfig.title}
+  type='application/rss+xml'
+/>
+{/* Webmentions */}
+{
+  siteConfig.webmentions && (
+    <>
+      <link href={siteConfig.webmentions.link} rel='webmention' />
+      {siteConfig.webmentions.pingback && (
+        <link href={siteConfig.webmentions.pingback} rel='pingback' />
+      )}
+    </>
+  )
+}
+<meta content={Astro.generator} name='generator' />
+
+{/* Umami analytics only in production */}
+{
+  import.meta.env.PROD && (
+    <script
+      is:inline
+      defer
+      src='https://analytics.mikepayne.me/script.js'
+      data-website-id='90245fb5-cec6-4b58-906a-9bdc8cae0677'
+    />
+  )
+}

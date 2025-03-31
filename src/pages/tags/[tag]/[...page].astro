@@ -1,0 +1,79 @@
+---
+import type { GetStaticPaths, Page } from 'astro'
+import type { CollectionEntry } from 'astro:content'
+import Button from '@/components/Button.astro'
+import Pagination from '@/components/Paginator.astro'
+import PostPreview from '@/components/blog/PostPreview.astro'
+import { getAllProjects, getUniqueTags, sortMDByDate } from '@/utils/project'
+import BaseLayout from '@/layouts/Base.astro'
+import CTA from '@/components/CTA.astro'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+  const allProjects = await getAllProjects()
+  const allProjectsByDate = sortMDByDate(allProjects)
+  const uniqueTags = getUniqueTags(allProjectsByDate)
+
+  return uniqueTags.flatMap((tag) => {
+    const filterPosts = allProjectsByDate.filter((post) =>
+      post.data.tags.includes(tag)
+    )
+    return paginate(filterPosts, {
+      pageSize: 10,
+      params: { tag }
+    })
+  })
+}
+
+interface Props {
+  page: Page<CollectionEntry<'projects'>>
+}
+
+const { page } = Astro.props
+const { tag } = Astro.params
+
+const meta = {
+  description: `View all posts with the tag - ${tag}`,
+  title: `Tag: ${tag}`
+}
+
+const paginationProps = {
+  ...(page.url.prev && {
+    prevUrl: {
+      text: 'Previous Page',
+      url: page.url.prev
+    }
+  }),
+  ...(page.url.next && {
+    nextUrl: {
+      text: 'Next Page',
+      url: page.url.next
+    }
+  })
+}
+---
+
+<BaseLayout {meta}>
+  <div class='w-full'>
+    <Button text='Back' href='/projects' class='max-w-fit'>
+      <MdiArrowLeft class='size-4' />
+    </Button>
+    <h1 class='mt-5 mb-6 flex items-end gap-x-2 text-2xl font-bold'>
+      Tags:
+      <span class='text-xl'>#{tag}</span>
+    </h1>
+    <section aria-label='Project list'>
+      <ul class='flex flex-col gap-3 text-start'>
+        {
+          page.data.map((p) => (
+            <li class='flex flex-col flex-wrap gap-2 sm:flex-row [&_q]:basis-full'>
+              <PostPreview project={p} withDesc />
+            </li>
+          ))
+        }
+      </ul>
+      <Pagination {...paginationProps} />
+    </section>
+  </div>
+  <CTA className='mx-auto mt-16'>Contact</CTA>
+</BaseLayout>

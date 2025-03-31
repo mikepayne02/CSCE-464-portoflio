@@ -1,0 +1,275 @@
+---
+import CommentsDisplay from './CommentsDisplay.astro'
+import LikesDisplay from './LikesDisplay.astro'
+import type {
+  WebmentionsCache,
+  WebmentionsChildren,
+  WebmentionsFeed,
+  DisplayComment // Use simplified type
+} from '@/types'
+import { drizzle } from 'drizzle-orm/d1'
+import { comments, type SelectComment } from '@/schema'
+import { eq, and, desc } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { WEBMENTION_API_KEY } from 'astro:env/server'
+import type { KVNamespace } from '@cloudflare/workers-types'
+
+interface Props {
+  targetUrl: string // Expect the full URL string as a prop
+}
+const { targetUrl: receivedTargetUrlString } = Astro.props // Renamed to avoid conflict
+
+// const cachePath = 'webmentions.json'
+const validWebmentionTypes = ['like-of', 'mention-of', 'in-reply-to']
+
+// Calls webmention.io api.
+async function fetchWebmentions(
+  target: URL,
+  timeFrom: string | null,
+  perPage = 1000
+) {
+  if (!import.meta.env.SITE || !import.meta.env.SITE.startsWith('https://')) {
+    console.warn('Must use a https site. Please set in astro.config.ts')
+    return null
+  }
+
+  if (!WEBMENTION_API_KEY) {
+    console.warn('No webmention api token specified in .env')
+    return null
+  }
+
+  let url = `https://webmention.io/api/mentions.jf2?target=${target}&token=${WEBMENTION_API_KEY}&sort-dir=up&per-page=${perPage}`
+
+  if (timeFrom) url += `&since${timeFrom}`
+
+  const res = await fetch(url)
+
+  if (res.ok) {
+    const data = (await res.json()) as WebmentionsFeed
+    return data
+  }
+
+  return null
+}
+
+// Merge cached entries [a] with fresh webmentions [b], merge by wm-id
+function mergeWebmentions(
+  a: WebmentionsCache,
+  b: WebmentionsFeed
+): WebmentionsChildren[] {
+  return Array.from(
+    [...a.children, ...b.children]
+      .reduce((map, obj) => map.set(obj['wm-id'], obj), new Map())
+      .values()
+  )
+}
+
+// filter out WebmentionChildren
+export function filterWebmentions(webmentions: WebmentionsChildren[]) {
+  return webmentions.filter((webmention) => {
+    // make sure the mention has a property so we can sort them later
+    if (!validWebmentionTypes.includes(webmention['wm-property'])) return false
+
+    // make sure 'mention-of' or 'in-reply-to' has text content.
+    if (
+      webmention['wm-property'] === 'mention-of' ||
+      webmention['wm-property'] === 'in-reply-to'
+    ) {
+      return webmention.content && webmention.content.text !== ''
+    }
+
+    return true
+  })
+}
+
+// save mentions for page to cloudflare KV
+async function writeToCache(
+  target: URL,
+  data: WebmentionsCache,
+  COMMENTS_KV: KVNamespace
+) {
+  await COMMENTS_KV.put(target.toString(), JSON.stringify(data)) // Use passed binding
+}
+
+async function getFromCache(
+  target: URL,
+  COMMENTS_KV: KVNamespace
+): Promise<WebmentionsCache> {
+  const emptyCache: WebmentionsCache = { lastFetched: null, children: [] }
+  const data = await COMMENTS_KV.get(target.toString()) // Use passed binding
+  if (!data) return emptyCache
+  try {
+    return JSON.parse(data) as WebmentionsCache
+  } catch (e) {
+    console.error(`Error parsing KV cache for ${target.toString()}:`, e)
+    return emptyCache // Return empty on parse error
+  }
+}
+// --- End Webmention Helpers ---
+
+// --- Gravatar Helper ---
+function getGravatarUrl(email: string): string {
+  const cleanedEmail = email.trim().toLowerCase()
+  const hash = createHash('md5').update(cleanedEmail).digest('hex')
+  return `https://www.gravatar.com/avatar/${hash}?d=mp&s=48` // Size 48px, 'mp' fallback
+}
+
+// --- HTML Escaping Helper (Basic - Consider library for security) ---
+const escapeHTML = (str: string = '') =>
+  str.replace(/</g, '<').replace(/>/g, '>')
+
+// --- Updated Mapper for D1 Comments to DisplayComment ---
+function mapD1ToDisplay(comment: SelectComment): DisplayComment {
+  const safeHtmlContent = escapeHTML(comment.commentText).replace(/\n/g, '<br>')
+  const author: DisplayComment['author'] = {
+    // Assumes authorName is not null (DB constraint)
+    name: comment.authorName,
+    photo: getGravatarUrl(comment.email)
+  }
+  return {
+    id: `d1-${comment.id}`,
+    author: author,
+    publishedDate: comment.publishedAt,
+    targetUrl: comment.targetUrl,
+    htmlContent: safeHtmlContent,
+    sourceType: 'comment'
+  }
+}
+
+// --- Updated Mapper for Webmentions to DisplayComment ---
+function mapWebmentionToDisplay(
+  mention: WebmentionsChildren
+): DisplayComment | null {
+  if (
+    (mention['wm-property'] === 'in-reply-to' ||
+      mention['wm-property'] === 'mention-of') &&
+    mention.content?.text
+  ) {
+    const rawHtml = mention.content.html || mention.content.text
+    const safeHtmlContent = escapeHTML(rawHtml).replace(/\n/g, '<br>') // Basic formatting
+
+    return {
+      id: `wm-${mention['wm-id']}`,
+      ...(mention.author && {
+        author: {
+          name: mention.author.name,
+          photo: mention.author.photo
+        }
+      }),
+      publishedDate: new Date(mention.published || mention['wm-received']),
+      sourceUrl: mention.url,
+      targetUrl: mention['wm-target'],
+      htmlContent: safeHtmlContent,
+      sourceType: 'webmention'
+    }
+  }
+  return null
+}
+
+// --- Combined Fetching Logic (accepts runtime context) ---
+async function getAllDisplayComments(
+  target: URL // Target will now always be a valid URL object
+): Promise<{ likes: WebmentionsChildren[]; comments: DisplayComment[] }> {
+  // Removed null check for target as it's now guaranteed by prop
+  const { COMMENTS: COMMENTS_KV, DB: D1_DB } = Astro.locals.runtime.env // Destructure bindings
+
+  // 1. Fetch/Cache Webmentions
+  let webmentionsFromIo: WebmentionsChildren[] = []
+  try {
+    const cache = await getFromCache(target, COMMENTS_KV)
+    const mentionsIoFeed = await fetchWebmentions(target, cache.lastFetched)
+
+    if (mentionsIoFeed) {
+      mentionsIoFeed.children = filterWebmentions(mentionsIoFeed.children)
+      const updatedCache: WebmentionsCache = {
+        lastFetched: new Date().toISOString(),
+        children: mergeWebmentions(cache, mentionsIoFeed)
+      }
+      // Fire and forget cache write for performance, or await if consistency is critical
+      writeToCache(target, updatedCache, COMMENTS_KV).catch((e) =>
+        console.error('KV write error:', e)
+      )
+      webmentionsFromIo = updatedCache.children
+    } else {
+      webmentionsFromIo = cache.children
+    }
+  } catch (e) {
+    console.error('Error fetching/caching webmentions:', e)
+    // Continue with potentially empty webmentionsFromIo
+  }
+
+  // 2. Fetch D1 Comments
+  let d1CommentsData: SelectComment[] = []
+  try {
+    const db = drizzle(D1_DB)
+    d1CommentsData = await db
+      .select()
+      .from(comments)
+      .where(
+        and(
+          eq(comments.targetUrl, target.toString()),
+          eq(comments.approved, true) // Only fetch approved comments
+        )
+      )
+      .orderBy(desc(comments.publishedAt))
+      .all()
+  } catch (e) {
+    console.error('Error fetching D1 comments:', e)
+    // Continue with empty d1CommentsData
+  }
+
+  // 3. Separate Likes from Webmentions
+  const likes = webmentionsFromIo.filter((m) => m['wm-property'] === 'like-of')
+
+  // 4. Map to Display Format
+  const displayD1Comments = d1CommentsData.map(mapD1ToDisplay)
+  const displayWebmentions = webmentionsFromIo
+    .map(mapWebmentionToDisplay)
+    .filter((c): c is DisplayComment => c !== null) // Filter out likes/nulls
+
+  // 5. Combine and Sort Comments
+  const allDisplayComments = [...displayD1Comments, ...displayWebmentions]
+  allDisplayComments.sort(
+    (a, b) => b.publishedDate.getTime() - a.publishedDate.getTime()
+  ) // Newest first
+
+  return { likes, comments: allDisplayComments }
+}
+
+// --- Fetch Data ---
+// Use the receivedTargetUrlString prop to create the URL object
+const targetUrl = new URL(receivedTargetUrlString) // This will now use the prop
+
+const { likes, comments: displayComments } =
+  await getAllDisplayComments(targetUrl)
+---
+
+{/* --- Render Display Components --- */}
+{
+  /* Removed targetUrl === null check as targetUrl is now a required prop and will always be defined */
+}
+{
+  (likes.length > 0 || displayComments.length > 0) && (
+    <div class='border-border mt-12 space-y-10 border-t pt-8'>
+      {' '}
+      {/* Added border-border */}
+      <h2 class='mb-6 text-2xl font-semibold'>Responses</h2>
+      {/* Likes Component */}
+      <LikesDisplay mentions={likes} />
+      {/* Comments Component */}
+      <CommentsDisplay comments={displayComments} />
+    </div>
+  )
+}
+{
+  likes.length === 0 && displayComments.length === 0 && (
+    <div class='border-border mt-12 pt-8'>
+      {' '}
+      {/* Added border-border */}
+      <p class='text-muted-foreground text-center text-sm'>
+        No responses yet. Be the first to comment!
+      </p>
+    </div>
+  )
+}
+{/* --- End Render --- */}

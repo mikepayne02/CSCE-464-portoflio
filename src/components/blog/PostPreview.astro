@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content'
+
+import FormattedDate from '../FormattedDate.astro'
+
+interface Props {
+  project: CollectionEntry<'projects'>
+  withDesc?: boolean
+}
+
+const { project, withDesc = false, ...props } = Astro.props as Props
+const postDate = project.data.updatedDate ?? project.data.publishDate
+
+const { description } = project.data
+---
+
+<li
+  class='flex flex-col gap-2 sm:flex-row sm:gap-x-4 [&_q]:basis-full'
+  {...props}
+>
+  <FormattedDate class='min-w-[120px] font-mono' date={postDate} />
+
+  <h2>
+    {project.data.draft && <span class='text-red-500'>(Draft) </span>}
+    <a
+      href={`/projects/${project.id}/`}
+      class='hover:text-muted-foreground transition'
+    >
+      {project.data.title}
+    </a>
+    {
+      withDesc && (
+        <p class='text-muted-foreground line-clamp-3 italic'>
+          {description &&
+            (description.length > 100
+              ? description.slice(0, 100) + '...'
+              : description)}
+        </p>
+      )
+    }
+  </h2>
+</li>

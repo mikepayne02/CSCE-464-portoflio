@@ -1,0 +1,192 @@
+---
+export const prerender = false
+
+import BaseLayout from '@/layouts/Base.astro'
+import { actions, isInputError } from 'astro:actions'
+import Button from '@/components/Button.astro'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+import MdiReload from '~icons/mdi/reload'
+import SvgSpinners3DotsScale from '~icons/svg-spinners/3-dots-scale'
+
+import { TURNSTILE_SITE_KEY } from 'astro:env/client'
+
+const result = Astro.getActionResult(actions.contact)
+const success = result?.data?.name ? true : false
+const inputErrors = isInputError(result?.error) ? result.error.fields : {}
+---
+
+{
+  !success && (
+    <script
+      src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback'
+      is:inline
+      defer
+      async
+      data-astro-rerun
+    />
+  )
+}
+
+<script is:inline define:vars={{ TURNSTILE_SITE_KEY }}>
+  window.onloadTurnstileCallback = function () {
+    // eslint-disable-next-line no-undef
+    turnstile.render('#turnstile-container', {
+      sitekey: TURNSTILE_SITE_KEY,
+      'response-field-name': 'turnstile'
+    })
+  }
+</script>
+
+<script
+  src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js'
+></script>
+
+<script define:vars={{ success }} is:inline type='module'>
+  if (success) {
+    // eslint-disable-next-line no-undef
+    confetti()
+    const spinner = document.getElementById('spinner')
+    document.getElementById('confetti').addEventListener('click', () => {
+      // eslint-disable-next-line no-undef
+      confetti()
+      spinner.classList.add('animate-[spin_250ms_ease-out]')
+      setTimeout(() => {
+        spinner.classList.remove('animate-[spin_250ms_ease-out]')
+      }, 250)
+    })
+  }
+</script>
+
+<script is:inline>
+  // eslint-disable-next-line no-unused-vars
+  function onSubmit() {
+    const submit = document.querySelector('#submit')
+    submit.disabled = true
+  }
+</script>
+
+<BaseLayout meta={{ title: 'Contact', description: 'Message me' }}>
+  {
+    result?.data?.name ? (
+      <div class='flex flex-col items-center px-4 py-10 sm:px-6 lg:px-8'>
+        <h1 class='block pb-4 font-mono text-7xl font-bold sm:text-5xl'>
+          Thanks!
+        </h1>
+        <p>
+          Thanks for reaching out, {result.data.name}! I'll be sure to reply as
+          soon as I can.
+        </p>
+        <div class='mt-5 flex flex-row'>
+          <Button text='Home' href='/'>
+            <MdiArrowLeft />
+          </Button>
+          <Button
+            as='button'
+            title='Replay confetti'
+            class='hover:text-muted-foreground/75 ms-2 size-8 animate-[appear_1500ms_ease-in-out_1500ms_forwards] cursor-pointer opacity-0 transition'
+            id='confetti'
+          >
+            <MdiReload class='size-5 origin-[46%_50%]' id='spinner' />
+          </Button>
+        </div>
+      </div>
+    ) : (
+      <div class='m-10 flex w-full flex-col justify-center text-center sm:w-2/3'>
+        <h2 class='text-2xl font-bold'>Contact</h2>
+        <div class='flex flex-col gap-y-7'>
+          {result?.error && !isInputError(result.error) && (
+            <p class='text-red-500'>Unknown Error: {result?.error.message}</p>
+          )}
+          <form
+            class='group mt-8 flex flex-col items-center gap-y-7'
+            id='contact-form'
+            onsubmit='onSubmit()'
+            method='POST'
+            action={actions.contact}
+            novalidate
+          >
+            <div class='w-full'>
+              <label for='fullName' class='flex w-full flex-col'>
+                <span class='mb-2'>Name</span>
+                {inputErrors.fullName && (
+                  <p class='text-red-500'>{inputErrors.fullName.join(', ')}</p>
+                )}
+                <span class='peer border-input-[&:not(:placeholder-shown):not(:focus):invalid]:block mt-2 hidden text-sm text-red-500'>
+                  Please enter a name
+                </span>
+              </label>
+              <input
+                id='fullName'
+                transition:persist
+                required
+                placeholder='Enter your name'
+                name='fullName'
+                type='text'
+                minlength='2'
+                autocomplete='name'
+                class='peer border-input bg-primary-foreground hover:border-foreground/25 w-full rounded-md border p-2 shadow-xs hover:shadow-md invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-500 invalid:[&:not(:placeholder-shown):not(:focus)]:text-red-500'
+              />
+            </div>
+
+            <div class='w-full'>
+              <label for='email' class='flex w-full flex-col'>
+                <span class='mb-2'>Email address</span>
+                {inputErrors.email && (
+                  <p class='text-red-500'>{inputErrors.email.join(', ')}</p>
+                )}
+                <span class='peer border-input-[&:not(:placeholder-shown):not(:focus):invalid]:block mt-2 hidden text-sm text-red-500'>
+                  Please enter an email address
+                </span>
+              </label>
+              <input
+                id='email'
+                transition:persist
+                name='email'
+                type='email'
+                autocomplete='email'
+                class='peer border-input bg-primary-foreground hover:border-foreground/25 w-full rounded-md border p-2 shadow-xs hover:shadow-md invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-500 invalid:[&:not(:placeholder-shown):not(:focus)]:text-red-500'
+                placeholder='Enter your email address'
+              />
+            </div>
+
+            <div class='w-full'>
+              <label for='message' class='flex w-full flex-col'>
+                <span class='mb-2'>Message</span>
+                {inputErrors.message && (
+                  <p class='text-red-500'>{inputErrors.message.join(', ')}</p>
+                )}
+                <span class='peer border-input-[&:not(:placeholder-shown):not(:focus):invalid]:block mt-2 hidden text-sm text-red-500'>
+                  Please enter a message at least 2 characters long
+                </span>
+              </label>
+              <textarea
+                id='message'
+                transition:persist
+                required
+                name='message'
+                placeholder='Enter your message'
+                minlength='2'
+                class='peer border-input bg-primary-foreground hover:border-foreground/25 [field-sizing:content] h-24 w-full rounded-md border p-2 shadow-xs hover:shadow-md invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-500 invalid:[&:not(:placeholder-shown):not(:focus)]:text-red-500'
+              />
+            </div>
+
+            {inputErrors.turnstile && (
+              <p class='text-red-500'>{inputErrors.turnstile.join(', ')}</p>
+            )}
+            <div id='turnstile-container' />
+            <button
+              type='submit'
+              id='submit'
+              class='group border-input bg-primary-foreground hover:bg-border/25 cursor-pointer rounded-lg border px-4 py-1 transition group-invalid:pointer-events-none group-invalid:opacity-50 disabled:pointer-events-none disabled:opacity-50'
+            >
+              <span class='block group-disabled:hidden'>Submit</span>
+              <span class='hidden group-disabled:block'>
+                Submitting <SvgSpinners3DotsScale class='inline' />
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+</BaseLayout>

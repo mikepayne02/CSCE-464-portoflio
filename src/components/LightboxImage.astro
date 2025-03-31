@@ -1,0 +1,9 @@
+---
+import { Image } from 'astro:assets'
+
+const { src, alt, ...props } = Astro.props
+---
+
+<p data-lightbox>
+  <Image class='rounded-md' src={src} alt={alt} {...props} />
+</p>

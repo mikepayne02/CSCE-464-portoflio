@@ -1,0 +1,84 @@
+---
+import MdiTagOutline from '~icons/mdi/tag-outline'
+import { Image } from 'astro:assets'
+import type { CollectionEntry } from 'astro:content'
+import FormattedDate from '../FormattedDate.astro'
+
+interface Props {
+  project: CollectionEntry<'projects'>
+  minutesRead: string
+}
+
+const { id } = Astro.params
+const {
+  project: { data },
+  minutesRead
+} = Astro.props
+
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
+  month: 'long'
+}
+---
+
+{
+  data.coverImage && (
+    <div
+      transition:name={`media-image-${id}`}
+      class='aspect-w-16 aspect-h-9 mb-6 overflow-hidden'
+    >
+      <Image
+        alt={data.coverImage.alt}
+        class='rounded-2xl object-cover'
+        width={720}
+        priority
+        src={data.coverImage.src}
+      />
+    </div>
+  )
+}
+{data.draft ? <span class='text-red-500'>(Draft)</span> : null}
+<div class='flex flex-wrap items-center gap-x-3 gap-y-2'>
+  <p class='text-xs'>
+    <FormattedDate date={data.publishDate} dateTimeOptions={dateTimeOptions} /> /{
+      ' '
+    }
+    {minutesRead}
+  </p>
+</div>
+<h1 class='mt-2 text-3xl font-medium sm:mb-1'>
+  {data.title}
+</h1>
+
+{
+  !!data.tags?.length && (
+    <div class='mt-3 flex flex-row items-center gap-x-1'>
+      <MdiTagOutline class='size-6' />
+      {data.tags.map((tag, i) => (
+        <div>
+          <a
+            aria-label={`View more blogs with the tag ${tag}`}
+            class="inline-block before:content-['#'] hover:underline hover:underline-offset-4"
+            data-pagefind-filter='tag'
+            href={`/tags/${tag}/`}
+          >
+            {tag}
+          </a>
+          {i < data.tags.length - 1 && ', '}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+{
+  data.updatedDate && (
+    <p class='mt-6 text-base'>
+      Last Updated:
+      <FormattedDate
+        class='ms-1'
+        date={data.updatedDate}
+        dateTimeOptions={dateTimeOptions}
+      />
+    </p>
+  )
+}

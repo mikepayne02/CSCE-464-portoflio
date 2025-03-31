@@ -1,0 +1,86 @@
+---
+
+---
+
+<nav
+  transition:persist='logo'
+  id='title'
+  class='relative order-1 mr-auto flex w-48 hover:opacity-70 sm:flex sm:w-56'
+  aria-label='global'
+>
+  <a id='logo' class='align-self-start' href='/' aria-label='Logo'>
+    <canvas
+      id='rive-canvas'
+      width='512'
+      height='70'
+      class='h-full w-full opacity-95 transition-opacity dark:invert'
+    >
+    </canvas>
+  </a>
+</nav>
+
+<script>
+  import {
+    Rive,
+    StateMachineInput,
+    StateMachineInputType
+  } from '@rive-app/canvas'
+
+  const options = {
+    src: '/logo.riv',
+    stateMachines: 'State Machine',
+    autoplay: true
+  }
+
+  const canvas = document.querySelector<HTMLCanvasElement>(
+    '#rive-canvas'
+  ) as HTMLCanvasElement
+  if (!canvas) {
+    throw new Error('Could not find canvas')
+  }
+
+  const titleDiv = document.querySelector<HTMLDivElement>('#title')
+  if (!titleDiv) {
+    throw new Error('Could not find title div')
+  }
+
+  const registerEvents = (r: Rive, hoverInput: StateMachineInput) => {
+    titleDiv.onmouseover = () => {
+      hoverInput.value = true
+    }
+    titleDiv.onmouseout = () => {
+      hoverInput.value = false
+    }
+
+    window.matchMedia('(min-width: 768px)').onchange = () => {
+      r.resizeDrawingSurfaceToCanvas()
+    }
+  }
+
+  const r = new Rive({
+    canvas,
+    ...options,
+    onLoad: () => {
+      r.setTextRunValue('NameText', 'Michael Payne')
+      r.setTextRunValue('CursorText', '█████████████')
+      r.resizeDrawingSurfaceToCanvas()
+
+      // Get the inputs via the name of the state machine
+      const inputs = r.stateMachineInputs('State Machine')
+      // Find the input you want to set a value for, or trigger
+      const hoverInput = inputs.find((i) => i.name === 'isHovered')
+      if (!hoverInput) {
+        throw new Error('Could not find hover input')
+      }
+      if (hoverInput.type !== StateMachineInputType.Boolean) {
+        throw new Error('Input is not a boolean')
+      }
+      registerEvents(r, hoverInput)
+    }
+  })
+</script>
+<style>
+  #logo {
+    filter: drop-shadow(0 0 20px hsl(var(--foreground) / 25%));
+  }
+</style>

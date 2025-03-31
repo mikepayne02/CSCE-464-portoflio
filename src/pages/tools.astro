@@ -1,0 +1,113 @@
+---
+import Button from '@/components/Button.astro'
+import ToolSection from '@/components/ToolSection.astro'
+import BaseLayout from '@/layouts/Base.astro'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+
+import illustrator from '@/assets/icons/Illustrator.png'
+import photoshop from '@/assets/icons/Photoshop.png'
+import davinciResolve from '@/assets/icons/DavinciResolve.png'
+import afterEffects from '@/assets/icons/AfterEffects.png'
+import blender from '@/assets/icons/Blender.png'
+import abletonLive from '@/assets/icons/AbletonLive.png'
+import flStudio from '@/assets/icons/FLStudio.png'
+import obsidian from '@/assets/icons/Obsidian.png'
+import neovim from '@/assets/icons/Neovim.png'
+
+const PHOTO = [
+  {
+    name: 'Illustrator',
+    description: 'Vector Graphics',
+    href: 'https://www.adobe.com/products/illustrator.html',
+    icon: illustrator,
+    iconBgColour: '#000001'
+  },
+  {
+    name: 'Photoshop',
+    description: 'Raster Graphics',
+    href: 'https://www.adobe.com/products/photoshop.html',
+    icon: photoshop,
+    iconBgColour: '#000001'
+  }
+]
+
+const VIDEO = [
+  {
+    name: 'Davinci Resolve',
+    description: 'Video Editing',
+    href: 'https://www.blackmagicdesign.com/products/davinciresolve',
+    icon: davinciResolve,
+    iconBgColour: '#000001'
+  },
+  {
+    name: 'After Effects',
+    description: 'Motion Graphics',
+    href: 'https://www.adobe.com/products/aftereffects.html',
+    icon: afterEffects,
+    iconBgColour: '#000001'
+  },
+  {
+    name: 'Blender',
+    description: '3D Graphics',
+    href: 'https://www.blender.org/',
+    icon: blender,
+    iconBgColour: '#000001'
+  }
+]
+const AUDIO = [
+  {
+    name: 'Ableton Live',
+    description: 'Digital Audio Workstation',
+    href: 'https://www.ableton.com/',
+    icon: abletonLive,
+    iconBgColour: '#000001'
+  },
+  {
+    name: 'FL Studio',
+    description: 'Digital Audio Workstation',
+    href: 'https://www.image-line.com/',
+    icon: flStudio,
+    iconBgColour: '#000001'
+  }
+]
+const PRODUCTIVITY = [
+  {
+    name: 'Obsidian',
+    description: 'Note Taking',
+    href: 'https://obsidian.md/',
+    icon: obsidian,
+    iconBgColour: '#7A3EE8'
+  }
+]
+
+const DEVELOPMENT = [
+  {
+    name: 'Neovim',
+    description: 'Editor',
+    href: 'https://neovim.io/',
+    icon: neovim,
+    iconBgColour: '#2C2C32'
+  }
+]
+---
+
+<BaseLayout meta={{ title: 'Tools' }} showViewCount={false}>
+  <div class='w-full'>
+    <Button text='Back' class='max-w-fit' href='/'>
+      <MdiArrowLeft class='size-4' />
+    </Button>
+
+    <div transition:animate='slide' class='mt-5 flex w-full flex-col gap-y-10'>
+      <div>
+        <h1 class='mb-1 text-2xl font-bold'>Tools</h1>
+        <p>Tools and software I use</p>
+      </div>
+
+      <ToolSection title='Photo' tools={PHOTO} />
+      <ToolSection title='Video' tools={VIDEO} />
+      <ToolSection title='Audio' tools={AUDIO} />
+      <ToolSection title='Productivity' tools={PRODUCTIVITY} />
+      <ToolSection title='Development' tools={DEVELOPMENT} />
+    </div>
+  </div>
+</BaseLayout>

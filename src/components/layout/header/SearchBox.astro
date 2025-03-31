@@ -1,0 +1,119 @@
+---
+// Heavy inspiration taken from Astro Starlight -> https://github.com/withastro/starlight/blob/main/packages/starlight/components/Search.astro
+
+import LineMdSearch from '~icons/mdi/search'
+import Search from 'astro-pagefind/components/Search'
+const props = Astro.props
+const q = Astro.url.searchParams.get('q') ?? ''
+---
+
+<site-search {...props} transition:persist='search'>
+  <button
+    data-open-modal
+    disabled
+    aria-label='search'
+    class='bg-primary-foreground border-input hover:bg-border/25 relative size-8 rounded-md border shadow-xs transition-colors hover:text-current/75 hover:shadow-sm'
+  >
+    <div
+      class='absolute start-1/2 top-1/2 size-6 -translate-x-1/2 -translate-y-1/2'
+    >
+      <LineMdSearch
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    </div>
+  </button>
+  <dialog
+    aria-label='search'
+    class='bg-background border-input h-2/3 max-h-fit w-full max-w-full border shadow-sm backdrop:backdrop-blur-sm sm:mx-auto sm:mt-16 sm:mb-auto sm:max-h-[calc(100%-8rem)] sm:min-h-[15rem] sm:max-w-[48rem] sm:rounded-2xl'
+  >
+    <div class='dialog-frame flex flex-col gap-4 p-6 pt-12 sm:pt-6'>
+      <Search
+        className='pagefind-ui'
+        query={q}
+        uiOptions={{ showImages: false }}
+      />
+    </div>
+  </dialog>
+</site-search>
+
+<script>
+  class SiteSearch extends HTMLElement {
+    private dialog: HTMLDialogElement
+    private dialogFrame: HTMLDivElement
+    private openBtn: HTMLButtonElement
+
+    closeModal = () => {
+      if (this.dialog.open) {
+        this.dialog.close()
+        window.removeEventListener('click', this.onWindowClick)
+      }
+    }
+
+    onWindowClick = (event: MouseEvent) => {
+      // check if it's a link
+      const isLink = 'href' in (event.target || {})
+      // make sure the click is either a link or outside of the dialog
+      if (
+        isLink ||
+        (document.body.contains(event.target as Node) &&
+          !this.dialogFrame.contains(event.target as Node))
+      )
+        this.closeModal()
+    }
+
+    onWindowKeydown = (e: KeyboardEvent) => {
+      // check if it's the / key
+      if (e.key === '/' && !this.dialog.open) {
+        this.openModal()
+        e.preventDefault()
+      }
+    }
+
+    openModal = (event?: MouseEvent) => {
+      this.dialog.showModal()
+      this.querySelector('input')?.focus()
+      event?.stopPropagation()
+      window.addEventListener('click', this.onWindowClick)
+    }
+
+    constructor() {
+      super()
+      this.openBtn = this.querySelector<HTMLButtonElement>(
+        'button[data-open-modal]'
+      ) as HTMLButtonElement
+      this.dialog = this.querySelector<HTMLDialogElement>(
+        'dialog'
+      ) as HTMLDialogElement
+      this.dialogFrame = this.querySelector<HTMLDivElement>(
+        '.dialog-frame'
+      ) as HTMLDivElement
+
+      this.openBtn.addEventListener('click', this.openModal)
+      this.openBtn.disabled = false
+    }
+
+    connectedCallback() {
+      // Listen for keyboard shortcut
+      window.addEventListener('keydown', this.onWindowKeydown)
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener('keydown', this.onWindowKeydown)
+    }
+  }
+
+  customElements.define('site-search', SiteSearch)
+</script>
+
+<style>
+  site-search {
+    --pagefind-ui-font: inherit;
+    --pagefind-ui-primary: var(--color-primary-foreground);
+    --pagefind-ui-text: var(--color-foreground);
+    --pagefind-ui-background: var(--color-background);
+    --pagefind-ui-border: var(--color-border);
+    --pagefind-ui-tag: var(--color-primary-foreground);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 1rem;
+  }
+</style>

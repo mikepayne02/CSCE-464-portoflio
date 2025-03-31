@@ -1,0 +1,42 @@
+---
+import { menuLinks } from '@/site-config'
+import SearchBox from './SearchBox.astro'
+import ThemeToggle from './ThemeToggle.astro'
+import Logo from './Logo.astro'
+
+const url = new URL(Astro.request.url)
+---
+
+<header
+  class='mb-10 flex w-full flex-wrap items-center gap-y-3 pb-3 font-mono sm:flex-nowrap sm:justify-start'
+>
+  <Logo />
+  <nav
+    class='order-3 me-2 flex w-full flex-row gap-x-5 font-medium sm:order-2 sm:w-auto sm:gap-x-4'
+  >
+    {
+      menuLinks.map((link) => {
+        const current = url.pathname === link.path
+        return (
+          <a
+            aria-current={current ? 'page' : false}
+            href={link.path}
+            class:list={[
+              current ? 'underline decoration-2 underline-offset-2' : '',
+              'hover:text-foreground/75 flex-none [text-shadow:_0_0_25px_hsl(var(--foreground)/25%)] sm:text-[1.05rem]'
+            ]}
+            aria-label={link.path + ' nav item'}
+          >
+            {link.title}
+          </a>
+        )
+      })
+    }
+  </nav>
+  <div
+    class='relative order-2 ms-0 flex h-8 flex-row gap-x-2 sm:order-3 sm:ms-2 sm:gap-x-4'
+  >
+    <SearchBox />
+    <ThemeToggle />
+  </div>
+</header>

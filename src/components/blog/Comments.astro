@@ -1,0 +1,29 @@
+---
+// src/components/blog/CommentSectionWrapper.astro
+import CommentForm from './comments/CommentForm.astro'
+import CommentLoader from './comments/CommentLoader.astro' // Data fetcher + display renderer
+import SvgSpinners3DotsScale from '~icons/svg-spinners/3-dots-scale'
+
+interface Props {
+  targetUrl: string // URL of the current post, still needed for CommentForm
+}
+
+const { targetUrl } = Astro.props
+---
+
+{/* This outer div will contain the deferred content */}
+<div class='comment-section-wrapper border-border mt-16 pt-8'>
+  {/* Comment Submission Form (part of the island) */}
+  <CommentForm {targetUrl} />
+
+  {/* Component responsible for fetching and displaying comments/likes */}
+  {/* It runs server-side when this island is fetched */}
+  <CommentLoader {targetUrl} server:defer>
+    {/* Fallback shown during initial page load and island fetch */}
+    <div slot='fallback' class='mt-12 text-center'>
+      <SvgSpinners3DotsScale
+        class='text-muted-foreground inline-block size-8'
+      />
+    </div>
+  </CommentLoader>
+</div>

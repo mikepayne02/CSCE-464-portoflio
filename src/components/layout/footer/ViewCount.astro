@@ -1,0 +1,30 @@
+---
+import { drizzle } from 'drizzle-orm/d1'
+import { views } from 'src/schema'
+import { eq } from 'drizzle-orm'
+import abbreviate from 'src/utils/abbreviate'
+
+const { path } = Astro.props
+const db = drizzle(Astro.locals.runtime.env.DB)
+
+const res = await db
+  .select({ count: views.count })
+  .from(views)
+  .where(eq(views.path, path))
+  .limit(1)
+  .then((res) => res[0] || { count: 0 })
+---
+
+{abbreviate(res.count)} views
+
+<script>
+  import { actions } from 'astro:actions'
+
+  if (document.hidden) {
+    document.addEventListener('astro:page-load', () => {
+      actions.incrementPageViews(window.location.pathname)
+    })
+  } else {
+    actions.incrementPageViews(window.location.pathname)
+  }
+</script>

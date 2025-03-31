@@ -1,0 +1,212 @@
+---
+import DUBadge from '@/assets/du_badge.svg'
+import Nebraska from '@/assets/nebraska.svg'
+import Profile from '@/assets/profile.png'
+import CTA from '@/components/CTA.astro'
+import Label from '@/components/Label.astro'
+import Section from '@/components/Section.astro'
+import SkillLayout from '@/components/SkillLayout.astro'
+import PostPreview from '@/components/blog/PostPreview.astro'
+import { getAllProjects, sortMDByDate } from '@/utils/project'
+import BaseLayout from '@/layouts/Base.astro'
+import { Image } from 'astro:assets'
+import ProjectCard from '@/components/ProjectCard.astro'
+import { MapSuspense } from '@/components/MapSuspense'
+import Birthday from '@/components/Birthday.astro'
+
+import MdiMapMarkerOutline from '~icons/mdi/map-marker-outline'
+import MdiCake from '~icons/mdi/cake'
+import MdiLinkedin from '~icons/mdi/linkedin'
+import MdiFileDocument from '~icons/mdi/file-document'
+import MdiExternalLink from '~icons/mdi/external-link'
+
+const languages = ['Typescript', 'Python', 'Java', 'Kotlin', 'PHP', 'SQL', 'Go']
+const software = ['Creative Cloud', 'Blender', 'Linux', 'VMware ESXi', 'Office']
+const tools = ['Docker', 'Terraform', 'NextJS', 'Kubernetes', 'AWS', 'Azure']
+
+const MAX_POSTS = 3
+const allPosts = await getAllProjects()
+const allPostsByDate = sortMDByDate(allPosts).slice(0, MAX_POSTS)
+---
+
+<BaseLayout meta={{ title: 'Home' }} showViewCount={true}>
+  <div class='flex w-full flex-col gap-y-12'>
+    <section class='flex flex-col items-center gap-y-7'>
+      <Image
+        width={128}
+        src={Profile}
+        alt='profile'
+        class='min-w-32 rounded-full p-2'
+        loading='eager'
+      />
+      <div class='flex flex-col items-center gap-y-4'>
+        <h1
+          class='font-sans text-3xl font-bold [text-shadow:_0_0_25px_hsl(var(--foreground)/25%)]'
+        >
+          what's up
+        </h1>
+        <CTA>Contact</CTA>
+        <div class='flex flex-wrap justify-center gap-x-7 gap-y-3'>
+          <Label>
+            <MdiMapMarkerOutline slot='icon' class='size-5' />
+            <span slot='title'>Overland Park, KS</span>
+          </Label>
+          <Label>
+            <MdiCake slot='icon' class='size-5' />
+            <Birthday slot='title' server:defer>
+              <span slot='fallback'>22</span>
+            </Birthday>
+          </Label>
+          <Label
+            as='a'
+            href='https://www.linkedin.com/in/michaelpayne02/'
+            target='_blank'
+          >
+            <span slot='title'>LinkedIn</span>
+            <MdiLinkedin slot='icon' class='text-foreground/75 size-5' />
+          </Label>
+          <Label as='a' href='resume'>
+            <MdiFileDocument slot='icon' class='text-foreground/75 size-5' />
+            <span slot='title'>Resume</span>
+          </Label>
+        </div>
+      </div>
+    </section>
+
+    <Section title='About'>
+      <p class='text-muted-foreground'>
+        Solving difficult problems is fun. Throughout my life, I've enjoyed
+        using creativity and critical thinking to my advantage in different
+        applications. Finance, technology, and media are some of the central
+        interests I have, and I'm always looking to find where innovation is in
+        those areas.
+      </p>
+      <p class='text-muted-foreground'>
+        In the future, I hope to pursue a field that fufills those interests. I
+        like to optimize and make systems more efficient, and I think the best
+        way to do that is with a team of like-minded people.
+      </p>
+    </Section>
+    <Section title='Designs'>
+      <div class='flex flex-col gap-y-3 sm:flex-row sm:gap-x-3 sm:gap-y-0'>
+        <ProjectCard
+          project={allPosts.find((p) => p.id === 'du-open')!}
+          heading='DU Open 2024'
+          subheading="Spring '24 tournameant - Definitely not The Masters Logo"
+          className='w-full sm:w-1/2'
+          loading='eager'
+        />
+        <ProjectCard
+          project={allPosts.find((p) => p.id === 'delta-scoopsilon')!}
+          heading='Delta Scoopsilon'
+          subheading="Fall '23 - Benefitting The Global Service Initiative"
+          className='w-full sm:w-1/2'
+          loading='eager'
+        />
+      </div>
+      <div class='flex flex-col gap-y-3 sm:flex-row sm:gap-x-3 sm:gap-y-0'>
+        <ProjectCard
+          project={allPosts.find((p) => p.id === 'rush-23')!}
+          heading='Rush 2023'
+          subheading='Greek-themed summer rush design'
+          className='w-full sm:w-1/3'
+        />
+        <ProjectCard
+          project={allPosts.find((p) => p.id === 'formal')!}
+          heading='Formal'
+          subheading="1920's theme at the Cornhusker Hotel"
+          className='w-full sm:w-1/3'
+        />
+        <ProjectCard
+          project={allPosts.find((p) => p.id === 'bags-for-bryan')!}
+          heading='Bags for Bryan'
+          subheading="Fall '22 - Benefitting Bryan Health"
+          className='w-full sm:w-1/3'
+        />
+      </div>
+    </Section>
+    <Section title='Education'>
+      <div
+        class='border-input bg-primary-foreground from-secondary/50 hover:border-foreground/25 relative grid-cols-4 rounded-xl border bg-linear-to-b px-5 py-3 shadow-xs transition hover:shadow-sm md:mx-auto md:w-3/4'
+      >
+        <Image
+          alt='University of Nebraska-Lincoln logo'
+          src={Nebraska}
+          width={64}
+          class='mb-3 h-12 w-auto md:absolute md:-left-16 md:mb-0 dark:invert'
+        />
+        <div class='flex flex-col gap-y-2'>
+          <div class='flex flex-col gap-y-0.5'>
+            <h1 class='text-lg font-medium'>University of Nebraska-Lincoln</h1>
+            <h2 class='text-muted-foreground italic'>
+              Major: Finance; Minor: Computer Science
+            </h2>
+            <h2 class='text-muted-foreground'>Aug 2021 - Current</h2>
+          </div>
+          <ul class='text-muted-foreground list-inside list-disc'>
+            <li>
+              GPA: <span class='font-mono'>3.72/4.00</span>
+            </li>
+            <li>Dean's List: Fall 2021 - Fall 2023</li>
+          </ul>
+        </div>
+      </div>
+    </Section>
+    <Section title='Leadership'>
+      <div
+        class='bg-primary-foreground border-input from-secondary/50 hover:border-foreground/25 relative grid-cols-4 rounded-xl border bg-linear-to-b px-5 py-3 shadow-xs transition hover:shadow-sm md:mx-auto md:w-3/4'
+      >
+        <Image
+          src={DUBadge}
+          alt='Delta Upsilon International Fraternity'
+          width={64}
+          class='mb-3 h-12 w-auto md:absolute md:-left-16 md:mb-0 dark:invert'
+        />
+        <div class='flex flex-col gap-y-2'>
+          <div class='flex flex-col gap-y-0.5'>
+            <h1 class='text-lg font-medium'>
+              VP of Administration, Apparel Chair
+            </h1>
+            <h2 class='text-muted-foreground italic'>
+              Delta Upsilon International Fraternity - Nebraska Chapter
+            </h2>
+            <h2 class='text-muted-foreground'>Nov 2022 - Nov 2023</h2>
+          </div>
+
+          <a
+            href='https://www.unldu.org'
+            target='_blank'
+            class='bg-foreground/90 text-background hover:bg-foreground/80 relative mx-auto my-2 inline-flex items-center rounded-lg px-4 py-2 font-bold shadow-[0_0_25px_hsl(var(--foreground)/25%)]'
+          >
+            <MdiExternalLink class='mr-2 size-4' />
+            <span class='mr-3'> unldu.org </span>
+            <span
+              class='pointer-events-none absolute -top-2 -right-5 inline-flex items-center justify-center rounded-full bg-red-700 px-2 py-1 text-xs leading-none font-bold text-white'
+              >new</span
+            >
+          </a>
+        </div>
+      </div>
+    </Section>
+    <Section title='Skills'>
+      <SkillLayout title='Software' skills={software} />
+      <SkillLayout title='Languages' skills={languages} />
+      <SkillLayout title='Tools' skills={tools} />
+    </Section>
+    {
+      allPostsByDate.length > 0 && (
+        <Section title='Projects'>
+          <ul class='flex flex-col gap-y-2'>
+            {allPostsByDate.map((p) => (
+              <li class='grid gap-2 sm:grid-cols-[auto_1fr] sm:[&_q]:col-start-2'>
+                <PostPreview project={p} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )
+    }
+    <MapSuspense client:visible />
+    <CTA className='my-6'>Contact</CTA>
+  </div>
+</BaseLayout>

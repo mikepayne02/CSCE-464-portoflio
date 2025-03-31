@@ -1,0 +1,68 @@
+---
+import type { WebmentionsChildren } from '@/types'
+import { Image } from 'astro:assets'
+
+interface Props {
+  mentions: WebmentionsChildren[] // Still takes raw webmentions
+}
+
+const { mentions } = Astro.props
+const MAX_LIKES_TO_SHOW = 10 // How many avatars to show max
+
+// Only consider 'like-of' type
+const allLikes = mentions.filter((like) => like['wm-property'] === 'like-of')
+const totalLikes = allLikes.length
+
+// Filter further for those with photos to actually display
+const likesToShow = allLikes
+  .filter((like) => like.author?.photo)
+  .slice(0, MAX_LIKES_TO_SHOW)
+---
+
+{
+  totalLikes > 0 && (
+    <div>
+      <p class='text-muted-foreground mb-2 text-sm font-medium'>
+        <strong>{totalLikes}</strong>
+        {totalLikes === 1 ? ' Like' : ' Likes'}
+      </p>
+      {likesToShow.length > 0 && (
+        <ul class='-ms-1 flex list-none flex-wrap overflow-hidden ps-0'>
+          {likesToShow.map((like) => (
+            <li class='ms-1 mb-1'>
+              {' '}
+              {/* Added bottom margin for wrapping */}
+              <a
+                class='not-prose ring-ring hover:ring-primary focus-visible:ring-primary relative inline-block size-10 overflow-hidden rounded-full ring-2 transition-transform outline-none hover:z-10 hover:-translate-y-1 hover:scale-110 focus-visible:z-10'
+                href={like.author?.url}
+                rel='noopener noreferrer ugc'
+                target='_blank'
+                title={like.author?.name}
+              >
+                <Image
+                  alt={`Avatar of ${like.author?.name}`}
+                  class='my-0 block size-full object-cover'
+                  height={40}
+                  src={like.author!.photo}
+                  width={40}
+                  loading='lazy'
+                  decoding='async'
+                  fetchpriority='low'
+                />
+              </a>
+            </li>
+          ))}
+          {/* "+N more" Indicator */}
+          {totalLikes > likesToShow.length && (
+            <li
+              class='bg-muted text-muted-foreground ring-border ms-1 mb-1 flex size-10 items-center justify-center rounded-full text-xs font-semibold ring-2'
+              title={`${totalLikes - likesToShow.length} more likes`}
+            >
+              +{totalLikes - likesToShow.length}
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  )
+}

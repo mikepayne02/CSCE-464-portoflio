@@ -1,0 +1,89 @@
+---
+import type { DisplayComment } from '@/types'
+import FormattedDate from '@/components/FormattedDate.astro'
+import MdiExternalLink from '~icons/mdi/external-link'
+import { Image } from 'astro:assets'
+
+interface Props {
+  comments: DisplayComment[]
+}
+
+const { comments } = Astro.props
+---
+
+{
+  !!comments.length && (
+    <div>
+      <h3 class='mb-4 text-lg font-semibold'>
+        {comments.length} Comment{comments.length > 1 ? 's' : ''}
+      </h3>
+      <ul class='divide-border mt-0 list-none divide-y ps-0'>
+        {comments.map((comment) => (
+          <li class='my-0 flex items-start gap-x-4 py-5'>
+            {/* Avatar Display */}
+            {comment.author?.photo ? (
+              <Image
+                alt={`Avatar for ${comment.author.name ?? 'Anonymous'}`}
+                class='not-prose ring-border my-0 size-12 shrink-0 rounded-full ring-2'
+                height={48}
+                src={comment.author.photo}
+                width={48}
+                loading='lazy'
+                decoding='async'
+                fetchpriority='low'
+              />
+            ) : (
+              <div
+                class='bg-muted ring-border flex size-12 shrink-0 items-center justify-center rounded-full ring-2'
+                aria-hidden='true'
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke-width='1.5'
+                  stroke='currentColor'
+                  class='text-muted-foreground size-6'
+                >
+                  <path
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    d='M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'
+                  />
+                </svg>
+              </div>
+            )}
+
+            {/* Comment Details */}
+            <div class='flex-auto'>
+              <div class='flex flex-wrap items-baseline justify-between gap-x-2'>
+                {/* Author Name (not linked) */}
+                <span class='text-foreground text-sm font-semibold'>
+                  {comment.author?.name ?? 'Anonymous'}
+                </span>
+                {/* Date and Source Link (if webmention) */}
+                <div class='text-muted-foreground flex items-center gap-x-2 text-xs whitespace-nowrap'>
+                  <FormattedDate date={comment.publishedDate} />
+                  {comment.sourceType === 'webmention' && comment.sourceUrl && (
+                    <a
+                      aria-label='View comment source'
+                      class='not-prose hover:text-foreground inline-block'
+                      href={comment.sourceUrl}
+                      rel='noopener noreferrer ugc'
+                      target='_blank'
+                      title='View original comment source'
+                    >
+                      <MdiExternalLink class='size-4' />
+                    </a>
+                  )}
+                </div>
+              </div>
+              {/* Comment Content (Ensure htmlContent is sanitized!) */}
+              <div set:html={comment.htmlContent} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}

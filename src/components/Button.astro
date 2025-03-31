@@ -1,0 +1,26 @@
+---
+const {
+  as: Tag = 'a',
+  class: className,
+  text,
+  href,
+  style = 'button',
+  ...props
+} = Astro.props
+---
+
+<Tag
+  class:list={[
+    className,
+    'bg-primary-foreground border-input flex flex-row items-center justify-center gap-x-1 border text-sm transition',
+    text && 'px-2 py-1',
+    href && 'hover:bg-border/25 shadow-xs hover:shadow-sm',
+    style === 'pill' ? 'rounded-full px-3' : 'rounded-lg'
+  ]}
+  href={href}
+  {...props}
+>
+  <slot />
+  {text && <span>{text}</span>}
+  <slot name='after' />
+</Tag>
