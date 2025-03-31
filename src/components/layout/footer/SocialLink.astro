@@ -1,0 +1,18 @@
+---
+type Props = {
+  href: string
+  label?: string
+  target?: '_blank' | '_self' | '_parent' | '_top'
+}
+const { href, label, target = '_blank' } = Astro.props
+---
+
+<a
+  class='text-muted-foreground hover:text-muted-foreground/75 inline-block w-8 transition-all hover:w-10 hover:scale-150'
+  aria-label={label}
+  rel='me'
+  href={href}
+  target={target}
+>
+  <slot name='icon' />
+</a>

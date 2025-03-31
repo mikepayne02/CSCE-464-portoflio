@@ -1,0 +1,108 @@
+---
+import Nebraska from '@/assets/nebraska.svg'
+import Profile from '@/assets/profile.png'
+import CTA from '@/components/CTA.astro'
+import Label from '@/components/Label.astro'
+import Section from '@/components/Section.astro'
+import SkillLayout from '@/components/SkillLayout.astro'
+import BaseLayout from '@/layouts/Base.astro'
+import { Image } from 'astro:assets'
+import { MapSuspense } from '@/components/MapSuspense'
+
+import LineMdMapMarker from '~icons/line-md/map-marker'
+import MdiLinkedin from '~icons/mdi/linkedin'
+import LineMdDocumentList from '~icons/line-md/document-list'
+
+const languages = ['Typescript', 'Python', 'Java', 'Kotlin', 'PHP', 'SQL', 'Go']
+const software = ['Creative Cloud', 'Blender', 'Linux', 'VMware ESXi', 'Office']
+const tools = ['Docker', 'Terraform', 'NextJS', 'Kubernetes', 'AWS', 'Azure']
+---
+
+<BaseLayout meta={{ title: 'Home' }}>
+  <div class='flex w-full flex-col gap-y-12'>
+    <section class='flex flex-col items-center gap-y-7'>
+      <Image
+        width={128}
+        src={Profile}
+        alt='profile'
+        class='min-w-32 rounded-full p-2'
+        loading='eager'
+      />
+      <div class='flex flex-col items-center gap-y-4'>
+        <h1
+          class='font-sans text-3xl font-bold [text-shadow:_0_0_25px_hsl(var(--foreground)/25%)]'
+        >
+          what's up
+        </h1>
+        <CTA>Contact</CTA>
+        <div class='flex flex-wrap justify-center gap-x-7 gap-y-3'>
+          <Label>
+            <LineMdMapMarker slot='icon' class='size-5' />
+            <span slot='title'>Overland Park, KS</span>
+          </Label>
+          <Label
+            as='a'
+            href='https://www.linkedin.com/in/michaelpayne02/'
+            target='_blank'
+          >
+            <span slot='title'>LinkedIn</span>
+            <MdiLinkedin slot='icon' class='text-foreground/75 size-5' />
+          </Label>
+          <Label as='a' href='/resume.pdf'>
+            <LineMdDocumentList slot='icon' class='text-foreground/75 size-5' />
+            <span slot='title'>Resume</span>
+          </Label>
+        </div>
+      </div>
+    </section>
+
+    <Section title='About'>
+      <p class='text-muted-foreground'>
+        Solving difficult problems is fun. Throughout my life, I've enjoyed
+        using creativity and critical thinking to my advantage in different
+        applications. Finance, technology, and media are some of the central
+        interests I have, and I'm always looking to find where innovation is in
+        those areas.
+      </p>
+      <p class='text-muted-foreground'>
+        In the future, I hope to pursue a field that fufills those interests. I
+        like to optimize and make systems more efficient, and I think the best
+        way to do that is with a team of like-minded people.
+      </p>
+    </Section>
+    <Section title='Education'>
+      <div
+        class='border-input bg-primary-foreground from-secondary/50 hover:border-foreground/25 relative grid-cols-4 rounded-xl border bg-linear-to-b px-5 py-3 shadow-xs transition hover:shadow-sm md:mx-auto md:w-3/4'
+      >
+        <Image
+          alt='University of Nebraska-Lincoln logo'
+          src={Nebraska}
+          width={64}
+          class='mb-3 h-12 w-auto md:absolute md:-left-16 md:mb-0 dark:invert'
+        />
+        <div class='flex flex-col gap-y-2'>
+          <div class='flex flex-col gap-y-0.5'>
+            <h1 class='text-lg font-medium'>University of Nebraska-Lincoln</h1>
+            <h2 class='text-muted-foreground italic'>
+              Major: Finance; Minor: Computer Science
+            </h2>
+            <h2 class='text-muted-foreground'>Aug 2021 - Current</h2>
+          </div>
+          <ul class='text-muted-foreground list-inside list-disc'>
+            <li>
+              GPA: <span class='font-mono'>3.72/4.00</span>
+            </li>
+            <li>Dean's List: Fall 2021 - Fall 2023</li>
+          </ul>
+        </div>
+      </div>
+    </Section>
+    <Section title='Skills'>
+      <SkillLayout title='Software' skills={software} />
+      <SkillLayout title='Languages' skills={languages} />
+      <SkillLayout title='Tools' skills={tools} />
+    </Section>
+    <MapSuspense client:visible />
+    <CTA className='my-6'>Contact</CTA>
+  </div>
+</BaseLayout>

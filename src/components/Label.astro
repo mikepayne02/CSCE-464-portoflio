@@ -1,0 +1,19 @@
+---
+const { class: className, as: Tag = 'div', title, href, ...props } = Astro.props
+---
+
+<Tag
+  class:list={[
+    className,
+    'flex flex-row items-center justify-center gap-x-2',
+    href &&
+      'hover:text-muted-foreground transition-colors hover:fill-current/50'
+  ]}
+  href={href}
+  {...props}
+>
+  <slot name='icon' />
+  <p>
+    <slot name='title'>{title}</slot>
+  </p>
+</Tag>

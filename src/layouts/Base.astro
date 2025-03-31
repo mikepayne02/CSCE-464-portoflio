@@ -1,0 +1,60 @@
+---
+import type { SiteMeta } from '@/types'
+import BaseHead from '@/components/Head.astro'
+import Footer from '@/components/layout/footer/Footer.astro'
+import Header from '@/components/layout/header/Header.astro'
+import SkipLink from '@/components/layout/SkipLink.astro'
+import ThemeProvider from '@/components/ThemeProvider.astro'
+
+import { siteConfig } from '@/site-config'
+
+interface Props {
+  meta: SiteMeta
+}
+
+const {
+  meta: { articleDate, description = siteConfig.description, ogImage, title }
+} = Astro.props
+---
+
+<html lang={siteConfig.lang}>
+  <head>
+    <BaseHead
+      articleDate={articleDate}
+      description={description}
+      ogImage={ogImage}
+      title={title}
+    />
+  </head>
+
+  <body class='bg-background flex justify-center'>
+    <div class='absolute -z-10 h-screen w-full overflow-hidden'>
+      <div
+        id='gradient'
+        class='absolute start-1/2 size-[70rem] -translate-x-1/2'
+      >
+      </div>
+    </div>
+    <ThemeProvider />
+    <SkipLink />
+    <!-- Main content element for skip link -->
+    <div
+      class='flex min-h-screen w-full max-w-[55rem] flex-col px-8 pt-7 pb-10 font-sans text-[0.92rem] leading-relaxed sm:px-10 lg:px-10'
+    >
+      <Header />
+      <main id='main' class='flex flex-col items-center'>
+        <slot />
+      </main>
+      <Footer />
+    </div>
+    <style>
+      #gradient {
+        background: radial-gradient(
+          circle at top,
+          hsl(var(--primary-foreground)) 0%,
+          transparent 35%
+        );
+      }
+    </style>
+  </body>
+</html>

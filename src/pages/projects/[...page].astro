@@ -1,0 +1,78 @@
+---
+import Button from '@/components/Button.astro'
+import CTA from '@/components/CTA.astro'
+import PostPreview from '@/components/blog/PostPreview.astro'
+import {
+  getAllProjects,
+  getUniqueTags,
+  groupProjectsByYear,
+  sortMDByDate
+} from '@/utils/project'
+import BaseLayout from '@/layouts/Base.astro'
+import type { GetStaticPaths } from 'astro'
+import type { CollectionEntry } from 'astro:content'
+
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+
+export const getStaticPaths = (async () => {
+  const allProjects = await getAllProjects()
+  const allProjectsByDate = sortMDByDate(allProjects)
+  const uniqueTags = getUniqueTags(allProjects)
+
+  return [
+    {
+      params: { page: undefined },
+      props: { projects: allProjectsByDate, uniqueTags }
+    }
+  ]
+}) satisfies GetStaticPaths
+
+interface Props {
+  projects: CollectionEntry<'projects'>[]
+  uniqueTags: string[]
+}
+
+const { projects } = Astro.props
+
+const meta = {
+  description:
+    'Browse my collection of projects and the things that interest me',
+  title: 'Projects'
+}
+
+const groupedByYear = groupProjectsByYear(projects)
+const descYearKeys = Object.keys(groupedByYear).sort((a, b) => +b - +a)
+---
+
+<BaseLayout {meta}>
+  <div class='w-full'>
+    <Button text='Back' class='max-w-fit' href='/' data-astro-prefetch>
+      <MdiArrowLeft class='size-4' />
+    </Button>
+
+    <h1 class='mt-5 mb-6 text-2xl font-bold'>Projects</h1>
+    {projects.length === 0 && <p>No projects yet.</p>}
+
+    {
+      projects.length > 0 && (
+        <div class='grid gap-y-16 sm:grid-cols-[3fr_1fr] sm:gap-x-8'>
+          <section aria-label='Projects list'>
+            {descYearKeys.map((yearKey) => (
+              <>
+                <h2 class='title text-lg'>{yearKey}</h2>
+                <ul class='mt-6 mb-8 space-y-4 text-start'>
+                  {groupedByYear[yearKey]?.map((p) => (
+                    <li class='grid gap-2 sm:grid-cols-[auto_1fr] sm:[&_q]:col-start-2'>
+                      <PostPreview project={p} withDesc />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ))}
+          </section>
+        </div>
+      )
+    }
+  </div>
+  <CTA className='mt-16'>Contact</CTA>
+</BaseLayout>

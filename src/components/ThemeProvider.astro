@@ -1,0 +1,52 @@
+{/* Inlined to avoid FOUC. */}
+<script is:inline>
+  const lightModePref = window.matchMedia('(prefers-color-scheme: light)')
+
+  function getUserPref() {
+    const storedTheme =
+      typeof localStorage !== 'undefined' && localStorage.getItem('theme')
+    return storedTheme || (lightModePref.matches ? 'light' : 'dark')
+  }
+
+  function setTheme(page, newTheme) {
+    if (newTheme !== 'light' && newTheme !== 'dark') {
+      return console.warn(
+        `Invalid theme value '${newTheme}' received. Expected 'light' or 'dark'.`
+      )
+    }
+
+    const root = page.documentElement
+
+    root.classList.toggle('dark', newTheme === 'dark')
+
+    const colorSchemeMetaTag = page.querySelector("meta[name='color-scheme']")
+    const themeColorMetaTag = page.querySelector("meta[name='theme-color']")
+
+    const bgColour = getComputedStyle(page.body).getPropertyValue(
+      '--background'
+    )
+
+    colorSchemeMetaTag.setAttribute('content', newTheme)
+    themeColorMetaTag.setAttribute('content', `hsl(${bgColour})`)
+
+    localStorage.setItem('theme', newTheme)
+  }
+
+  // initial setup
+  setTheme(document, getUserPref())
+
+  // View Transitions hook to restore theme
+  document.addEventListener('astro:after-swap', () =>
+    setTheme(document, getUserPref())
+  )
+
+  // listen for theme-change custom event, fired in src/components/ThemeToggle.astro
+  document.addEventListener('theme-change', (e) => {
+    setTheme(document, e.detail.theme)
+  })
+
+  // listen for prefers-color-scheme change.
+  lightModePref.addEventListener('change', (e) =>
+    setTheme(document, e.matches ? 'light' : 'dark')
+  )
+</script>
